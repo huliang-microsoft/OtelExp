@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ZYtPNV3r3en4dmj3clv9dtjrvsmudLxqLzy3T99Zq0q4zpzPNzmZ2Fx9Ke6/Z4x7Ef2CKqANFTgGghHgs6vHcg==",
+  "dgSpecHash": "rOBbHa4TX9XXenNgecHceVaVQP65r3xvWwkE7fOdRVPFZhvOvKTWTfUgaDI0LJ08xOvZs1sWYx/umEJN0Mmb/g==",
   "success": true,
-  "projectFilePath": "/home/huliang/repo/OtelExp/hello-geneva-metric/hello-geneva-metric.csproj",
+  "projectFilePath": "/home/huliang/repo/OtelExp/HelloGenevaMetricsDotnet/hello-geneva-metric.csproj",
   "expectedPackageFiles": [
     "/home/huliang/.nuget/packages/google.protobuf/3.22.5/google.protobuf.3.22.5.nupkg.sha512",
     "/home/huliang/.nuget/packages/grpc.core.api/2.52.0/grpc.core.api.2.52.0.nupkg.sha512",

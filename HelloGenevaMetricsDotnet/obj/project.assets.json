@@ -1182,11 +1182,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/huliang/repo/OtelExp/hello-geneva-metric/hello-geneva-metric.csproj",
+      "projectUniqueName": "/home/huliang/repo/OtelExp/HelloGenevaMetricsDotnet/hello-geneva-metric.csproj",
       "projectName": "hello-geneva-metric",
-      "projectPath": "/home/huliang/repo/OtelExp/hello-geneva-metric/hello-geneva-metric.csproj",
+      "projectPath": "/home/huliang/repo/OtelExp/HelloGenevaMetricsDotnet/hello-geneva-metric.csproj",
       "packagesPath": "/home/huliang/.nuget/packages/",
-      "outputPath": "/home/huliang/repo/OtelExp/hello-geneva-metric/obj/",
+      "outputPath": "/home/huliang/repo/OtelExp/HelloGenevaMetricsDotnet/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/huliang/.nuget/NuGet/NuGet.Config"
