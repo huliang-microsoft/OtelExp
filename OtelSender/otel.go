@@ -15,6 +15,7 @@ import (
 )
 
 func newExporter(ctx context.Context) (trace.SpanExporter, error) {
+	//return otlptracehttp.New(ctx, otlptracehttp.WithHeaders(map[string]string{"123": "456"}))
 	return otlptracehttp.New(ctx)
 }
 
@@ -54,13 +55,13 @@ func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 	otel.SetTracerProvider(tracerProvider)
 
 	// Set up meter provider.
-	meterProvider, err := newMeterProvider()
-	if err != nil {
-		handleErr(err)
-		return
-	}
-	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
-	otel.SetMeterProvider(meterProvider)
+	//meterProvider, err := newMeterProvider()
+	//if err != nil {
+	//	handleErr(err)
+	//	return
+	//}
+	//shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	//otel.SetMeterProvider(meterProvider)
 
 	return
 }
@@ -75,6 +76,19 @@ func newPropagator() propagation.TextMapPropagator {
 func newTraceProvider() (*trace.TracerProvider, error) {
 	//traceExporter, err := stdouttrace.New(
 	//	stdouttrace.WithPrettyPrint())
+	//res := resource.NewWithAttributes(
+	//	semconv.SchemaURL,
+	//	semconv.ServiceNameKey.String("myService"),
+	//	semconv.ServiceNamespaceKey.String("myNamespace"),
+	//	semconv.ServiceVersionKey.String("1.0.0"),
+	//	semconv.ServiceInstanceIDKey.String("abcdef12345"),
+	//)
+
+	//res, err := resource.New(
+	//	context.Background(),
+		//resource.WithFromEnv(),
+	//)
+
 	traceExporter, err := newExporter(context.Background())
 	if err != nil {
 		return nil, err
@@ -84,7 +98,9 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 		trace.WithBatcher(traceExporter,
 			// Default is 5s. Set to 1s for demonstrative purposes.
 			trace.WithBatchTimeout(time.Second)),
+		//trace.WithResource(res),
 	)
+	println("No resources setting")
 	return traceProvider, nil
 }
 

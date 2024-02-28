@@ -1,0 +1,23 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# server and client executable artifacts for linux64
+# when built locally out of container.
+OtelSender/otelsender
+
+# For debugging using vscode
+.vscode/
+
+# Any generated log files
+*.log
+
+# Dotnet sample bin and obj folder
+hello-geneva-metric/bin/*
+hello-geneva-metric/obj/*

@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 
 	"go.opentelemetry.io/otel"
@@ -26,6 +27,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	println(endpoint)
 }
 
 func rolldice(w http.ResponseWriter, r *http.Request) {
