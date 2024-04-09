@@ -1,0 +1,42 @@
+# Configures a collector to dump to the console. This should be used for debugging only.
+extensions:
+  health_check:
+    endpoint: :13133
+  pprof:
+    endpoint: :1777
+  zpages:
+    endpoint: :55679
+exporters:
+  debug:
+    verbosity: detailed
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+service:
+  extensions:
+  - health_check
+  - pprof
+  - zpages
+  pipelines:
+    traces:
+      exporters:
+      - debug
+      receivers:
+      - otlp
+    metrics:
+      exporters:
+      - debug
+      receivers:
+      - otlp
+    logs:
+      exporters:
+      - debug
+      receivers:
+      - otlp
+  telemetry:
+    logs:
+      level: INFO
