@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 )
 
@@ -27,7 +28,7 @@ var SCOPE = "fa65c9d1-e75e-4ac1-b7c1-608189fd7969/.default"
 // The RAIUAI identity ID in AME
 var UAI_CLIENT_ID = "1baa67a6-59c1-4c0f-a675-ee2682793b42"
 
-var metricExporter *Exporter
+
 
 func newTraceExporter(ctx context.Context) (trace.SpanExporter, error) {
 	token, err := getToken(ctx, SCOPE, UAI_CLIENT_ID)
@@ -41,28 +42,17 @@ func newTraceExporter(ctx context.Context) (trace.SpanExporter, error) {
 	return otlptracehttp.New(ctx, otlptracehttp.WithHeaders(kv))
 }
 
-func newMetricsExporter(ctx context.Context) (metric.Exporter, error) {
+func newMetricsExporter(ctx context.Context, setToken bool) (metric.Exporter, error) {
 	token, err := getToken(ctx, SCOPE, UAI_CLIENT_ID)
 	if err != nil {
 		return nil, err
 	}
-
 	kv := make(map[string]string)
-	kv["Authorization"] = "Bearer 123" + token
+	if setToken {
+		kv["Authorization"] = "Bearer " + token
+	}
 
-	exporter, err := New(ctx, WithHeaders(kv))
-	// convertedClient := exporter.client.(*client)
-	// for k, v := range convertedClient.req.Header {
-	// 	fmt.Println(k, v)
-	// }
-
-	// convertedClient.req.Header["Authorization"] = []string{"Bearer"}
-	// convertedClient = exporter.client.(*client)
-	// for k, v := range convertedClient.req.Header {
-	// 	fmt.Println(k, v)
-	// }
-	metricExporter = exporter
-	return exporter, err
+	return otlpmetrichttp.New(ctx, otlpmetrichttp.WithHeaders(kv))
 }
 
 // setupOTelSDK bootstraps the OpenTelemetry pipeline.
@@ -107,6 +97,7 @@ func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 		return
 	}
 	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	println("Set meter provider1")
 	otel.SetMeterProvider(meterProvider)
 
 	return
@@ -148,12 +139,52 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String("StubRAIService"),
+		semconv.ServiceNamespaceKey.String("StubRAIOSenderMetrics"),
+		semconv.ServiceVersionKey.String("1.0.0"),
+		semconv.ServiceInstanceIDKey.String("StubRAIOInstance"),
+	)
+
+	metricExporter, err := newMetricsExporter(context.Background(), true)
+	if err != nil {
+		return nil, err
+	}
+
+	/*
+	t, b := metricExporter.(*otlpmetrichttp.Exporter)
+	exporterValue := reflect.ValueOf(t).Elem()  
+	clientValue := exporterValue.FieldByName("client")  
+  
+	if clientValue.IsValid() {  
+		fmt.Println(clientValue.Interface())  
+	} else {  
+		fmt.Println("Field not found")  
+	}  
+
+	print(b)
+	*/
+
+
+	// print(metricExporter.client.req.Header["Authorization"])
+
+	meterProvider := metric.NewMeterProvider(
+		metric.WithReader(metric.NewPeriodicReader(metricExporter,
+			// Default is 1m. Set to 3s for demonstrative purposes.
+			metric.WithInterval(3*time.Second))),
+		metric.WithResource(res),
+	)
+	return meterProvider, nil
+}
+
+func newMeterProviderWithoutAuth() (*metric.MeterProvider, error) {
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("StubRAIService"),
 		semconv.ServiceNamespaceKey.String("StubRAIOMetrics"),
 		semconv.ServiceVersionKey.String("1.0.0"),
 		semconv.ServiceInstanceIDKey.String("StubRAIOInstance"),
 	)
 
-	metricExporter, err := newMetricsExporter(context.Background())
+	metricExporter, err := newMetricsExporter(context.Background(), true)
 	if err != nil {
 		return nil, err
 	}

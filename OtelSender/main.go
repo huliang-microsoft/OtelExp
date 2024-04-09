@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	print("IMHERE")
 	if err := run(); err != nil {
 		log.Fatalln(err)
 	}
@@ -45,6 +46,28 @@ func run() (err error) {
 	srvErr := make(chan error, 1)
 	go func() {
 		srvErr <- srv.ListenAndServe()
+	}()
+
+	// update the token
+	go func() {
+		auth := true
+		for {
+			convertedClient := metricExporter.client.(*client)
+			if auth {
+				token, _ := getToken(ctx, SCOPE, UAI_CLIENT_ID)
+				convertedClient.req.Header["Authorization"] = []string{"Bearer " + token}
+				println("Update the header token with real token.")
+			} else {
+				convertedClient.req.Header["Authorization"] = []string{"Bearer " + "123"}
+				println("Update the header token with fake token.")
+			}
+
+			auth = !auth
+			println("Sleep for 300s")
+			time.Sleep(300 * time.Second)
+			println("Sleep done")
+		}
+
 	}()
 
 	// Wait for interruption.
