@@ -98,6 +98,6 @@ metric("http.server.duration").preaggregate("By NS").samplingTypes("Count")
 //| where dimension("service.instance.id") contains "StubRAIOInstance"
 | top 40 by avg(samplingType("Count")) desc
 ```
-![](Grafana.png)
+![](screenshots/Grafana.png)
 
 Modify the metrics pre aggregation [here](https://portal.microsoftgeneva.com/manage/metrics/v1?account=AzureOpenAIMetrics&namespace=PlatformMetrics&metric=annotate&tab=metrics&hideLeftNav=true&newManageSessionId=ee2ed0b5-ac2a-496e-a4d3-8e369583f9ac)
