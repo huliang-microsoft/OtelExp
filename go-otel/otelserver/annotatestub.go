@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	tracer  = otel.Tracer("annotate")
+	tracer  = otel.Tracer("rai.experiment.annotate")
 	meter   = otel.Meter("rai.experiment.annotate")
 	annotateCnt metric.Int64Counter
 )
 
 func init() {
 	var err error
-	annotateCnt, err = meter.Int64Counter("rai.annotate",
+	annotateCnt, err = meter.Int64Counter("rai.experiment.annotate",
 		metric.WithDescription("The number of annotate call."),
 		metric.WithUnit("{annotate}"))
 	if err != nil {
@@ -43,7 +43,8 @@ func annotate(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	// random annotate result
-	annotateResult := bodyStr + ": with random number " + strconv.Itoa(rand.Intn(100))
+	annotateResult := fmt.Sprintf("%s: server generated a random number %d", bodyStr, rand.Intn(100))
+	fmt.Println(annotateResult)
 
 	// Add the custom attribute to the span and counter.
 	annotateResultValueAttr := attribute.String("annotate.result.value", annotateResult)
@@ -52,7 +53,6 @@ func annotate(w http.ResponseWriter, r *http.Request) {
 	annotateCnt.Add(ctx, 1, metric.WithAttributes(annotateResultValueAttr, annotateFakeLatency))
 
 	resp := annotateResult + "\n"
-	print(annotateResult)
 	if _, err := io.WriteString(w, resp); err != nil {
 		log.Printf("Write failed: %v\n", err)
 	}

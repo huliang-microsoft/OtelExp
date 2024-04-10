@@ -33,13 +33,12 @@ var metricExporter *otelcustomhttpmetricexportor.Exporter
 func UpdateMetricExporterAuthToken(realToken bool, ctx context.Context) {
 	if realToken {
 		token, _ := auth.GetToken(ctx, SCOPE, UAI_CLIENT_ID)
-		metricExporter.UpdateClientHeader("Authorization", []string{token})
+		metricExporter.UpdateClientHeader("Authorization", []string{"Bearer " + token})
 		println("Update the header token with real token.")
 	} else {
 		metricExporter.UpdateClientHeader("Authorization", []string{"FakeToken"})
 		println("Update the header token with fake token.")
 	}
-
 }
 
 func newTraceExporter(ctx context.Context) (trace.SpanExporter, error) {
@@ -61,7 +60,7 @@ func newMetricsExporter(ctx context.Context) (metric.Exporter, error) {
 	}
 
 	kv := make(map[string]string)
-	kv["Authorization"] = "Bearer 123" + token
+	kv["Authorization"] = "Bearer " + token
 
 	exporter, err := otelcustomhttpmetricexportor.New(ctx, otelcustomhttpmetricexportor.WithHeaders(kv))
 
@@ -129,10 +128,10 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	//	stdouttrace.WithPrettyPrint())
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("StubRAIService330"),
-		semconv.ServiceNamespaceKey.String("StubRAIOTrace330"),
+		semconv.ServiceNameKey.String("huliang-stubraio-tracename"),
+		semconv.ServiceNamespaceKey.String("huliang-stubraio-tracens"),
 		semconv.ServiceVersionKey.String("1.0.0"),
-		semconv.ServiceInstanceIDKey.String("StubRAIOInstance330"),
+		semconv.ServiceInstanceIDKey.String("huliang-stubraio-traceid"),
 	)
 
 	traceExporter, err := newTraceExporter(context.Background())
@@ -152,10 +151,10 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 func newMeterProvider() (*metric.MeterProvider, error) {
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("StubRAIService"),
-		semconv.ServiceNamespaceKey.String("StubRAIOMetrics"),
+		semconv.ServiceNameKey.String("huliang-stubraio-metricname"),
+		semconv.ServiceNamespaceKey.String("huliang-stubraio-metricns"),
 		semconv.ServiceVersionKey.String("1.0.0"),
-		semconv.ServiceInstanceIDKey.String("StubRAIOInstance"),
+		semconv.ServiceInstanceIDKey.String("huliang-stubraio-metricid"),
 	)
 
 	metricExporter, err := newMetricsExporter(context.Background())

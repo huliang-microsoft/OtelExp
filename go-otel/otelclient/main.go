@@ -4,22 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 
 	"rai-go-otel/otelsetup"
-)
-
-var (
-	tracer  = otel.Tracer("annotate")
-	meter   = otel.Meter("rai.experiment.annotate")
-	annotateCnt metric.Int64Counter
 )
 
 func main() {  
@@ -55,9 +45,6 @@ func main() {
 					fmt.Printf("Error sending request: %s\n", err)  
 					continue  
 				}
-				annotateResultValueAttr := attribute.String("annotate.result.exp.value", "TestStringValue")
-				annotateFakeLatency := attribute.Int("annotate.result.exp.tms.latency", rand.Intn(1000))
-				annotateCnt.Add(context.Background(), 1, metric.WithAttributes(annotateResultValueAttr, annotateFakeLatency))
   
 				// Print the response status code  
 				fmt.Printf("Response status: %s\n", resp.Status)  

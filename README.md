@@ -68,9 +68,9 @@ OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE is setting the Temporality for
 ````
 export OTEL_EXPORTER_OTLP_ENDPOINT=https://ca-otelcol-lgvgvhiuark32.nicefield-824a522d.westus3.azurecontainerapps.io
 export OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=Delta
-export AZURE_TENANT_ID="33e01921-4d64-4f8c-a055-5bdaffd5e33d"
-export AZURE_CLIENT_ID="9c7ae59d-9323-4423-a0da-38ddce774875"
-export AZURE_CLIENT_SECRET = "CANNOTSHOW"
+export AZURE_TENANT_ID="33e01921-4d64-4f8c-a055-5bdaffd5e33d"  // Not really need if you run the stub service, it is hard coded already.
+export AZURE_CLIENT_ID="9c7ae59d-9323-4423-a0da-38ddce774875"   // Not really need if you run the stub service, it is hard coded already.
+export AZURE_CLIENT_SECRET="CANNOTSHOW"
 ````
 Start the client and server as above section.
 
