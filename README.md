@@ -24,14 +24,14 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 Run the stub service, it will listen ```http://localhost:12345```
 ````
 cd <repo root>
-cd OtelServer
+cd go-otel/otelserver/
 go run .
 ````
 
 Run the stub client, it will try to call ```http://localhost:12345/annotate``` on a fixed internal.
 ````
 cd <repo root>
-cd OtelClient
+cd go-otel/otelclient/
 go run .
 ````
 
