@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -45,10 +46,14 @@ func GetTokenInAzure(
 	clientId string,
 ) (string, error) {
 
+	println("Try to get token in Azure.")
+	println(resource)
 	fromAML := false
 	if os.Getenv("USING_AML") == "true" {
 		fromAML = true
 	}
+
+	println("Not from AML")
 
 	logPrefix := fmt.Sprintf(
 		"GetMSIToken(fromAML=%v, resource=%s, UAIdentityClientId=%s): ",
@@ -56,7 +61,7 @@ func GetTokenInAzure(
 
 	if resource == "" || clientId == "" {
 		fmt.Printf(logPrefix + "one or more inputs is blank\n")
-		return "", fmt.Errorf("one or more inputs is blank\n")
+		return "", fmt.Errorf("one or more inputs is blank")
 	}
 
 	var queryStr string
@@ -127,7 +132,9 @@ func GetTokenInAzure(
 	fmt.Printf("Successfully get token in Azure Env: %s\n", token.AccessToken)
 	// set the cached token.
 	cachedToken.Token = token.AccessToken
-	expiresOn, err := time.Parse(time.RFC3339, token.ExpiresOn)  
+
+	timestamp, err := strconv.ParseInt(token.ExpiresOn, 10, 64)  
+	expiresOn := time.Unix(timestamp, 0)
 	if err != nil {  
 		fmt.Println("Error parsing AADToken.ExpiresOn", err)  
 		return "", err
@@ -138,19 +145,26 @@ func GetTokenInAzure(
 
 // Get token using app id, should be use in local development or in public environment.
 func GetTokenWithAppID(ctx context.Context, resource string) (string, error) {
-	os.Setenv("AZURE_TENANT_ID", AZURE_TENANT_ID)
-	os.Setenv("AZURE_CLIENT_ID", AZURE_CLIENT_ID)
+	//os.Setenv("AZURE_TENANT_ID", AZURE_TENANT_ID)
+	//os.Setenv("AZURE_CLIENT_ID", AZURE_CLIENT_ID)
 
 	// Make sure secret is present
-	if os.Getenv("AZURE_CLIENT_SECRET") == "" {
-		fmt.Printf("AZURE_CLIENT_SECRET is missing.\n")
+	OTELP_CLIENT_SECRET := os.Getenv("OTLP_CLIENT_SECRET")
+	if OTELP_CLIENT_SECRET == "" {
+		fmt.Printf("OTLP_CLIENT_SECRET is missing.\n")
 	}
 
 	logPrefix := fmt.Sprintf(
 		"GetTokenWithAppID(tenantId=%s, clientId=%s, clientSecret=%s): ",
 		os.Getenv("AZURE_TENANT_ID"), os.Getenv("AZURE_CLIENT_ID"), os.Getenv("AZURE_CLIENT_SECRET"))
 
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	//credential, err := azidentity.NewDefaultAzureCredential(nil)
+	print("Use clientid and secret\n")
+	credential, err := azidentity.NewClientSecretCredential(  
+		AZURE_TENANT_ID,  
+		AZURE_CLIENT_ID,  
+		OTELP_CLIENT_SECRET,  
+		nil)
 
 	if err != nil {
 		fmt.Printf(logPrefix + "Error creating default azure credential: %s\n", err)
@@ -174,8 +188,37 @@ func GetTokenWithAppID(ctx context.Context, resource string) (string, error) {
 	return token.Token, nil
 }
 
+func GetTokenWithDefaultUAI(ctx context.Context, resource string) (string, error) {
+	
+	logPrefix := fmt.Sprintf(
+		"GetTokenWithDefaultUAI %s", os.Getenv("AZURE_CLIENT_ID"))
+	credential, _ := azidentity.NewDefaultAzureCredential(nil)
+	options := policy.TokenRequestOptions{
+		Scopes: []string{resource},
+	}
+
+	UAI_CLIENT_ID := "1baa67a6-59c1-4c0f-a675-ee2682793b42"
+	fmt.Printf("Use hard coded id %s\n", UAI_CLIENT_ID)
+	//clientID := azidentity.ClientID(UAI_CLIENT_ID)
+	//opts := azidentity.ManagedIdentityCredentialOptions{ID: clientID}
+	//credential, _ := azidentity.NewManagedIdentityCredential(&opts)
+
+	token, err := credential.GetToken(ctx, options)
+	if err != nil {
+		fmt.Printf(logPrefix + "Error GetToken: %s\n", err)
+		return "", err
+	}
+
+	cachedToken.Token = token.Token
+	cachedToken.ExpiresOn = token.ExpiresOn
+	// print(token.ExpiresOn.Format(time.RFC3339))
+
+	fmt.Printf("Successfully get token with Default UAI %s\n", token.Token)
+	return token.Token, nil
+}
+
 // Main api to call to get token.
-func GetToken(ctx context.Context, resource string, clientId string) (string, error) {
+func GetToken(ctx context.Context, resource string) (string, error) {
 	// Try to get cached token.
 	currentTime := time.Now()
 	fiveMinsfromNow := currentTime.Add(5 * time.Minute)
@@ -185,15 +228,29 @@ func GetToken(ctx context.Context, resource string, clientId string) (string, er
 		return cachedToken.Token, nil
 	}
 
-	// First try Azure way
-	token, err := GetTokenInAzure(ctx, resource, clientId)
+	// Get token from UAI_CLIENT_ID
+	UAI_CLIENT_ID := os.Getenv("UAI_CLIENT_ID")
+	fmt.Printf("Getting UAI_CLIENT_ID: %s\n", UAI_CLIENT_ID)
 
-	if err == nil {
-		return token, nil
+	if UAI_CLIENT_ID != "" {
+		// First try Azure way
+		
+		for i := 0; i < 10; i++ {
+			token, err := GetTokenInAzure(ctx, resource, UAI_CLIENT_ID)
+			// token, err := GetTokenWithDefaultUAI(ctx, resource)
+
+			if err == nil {
+				return token, nil
+			}
+
+			// This is to give me enough time to check container instance log.
+			print("Going to try again in 60s")
+			time.Sleep(60 * time.Second)
+		}
 	}
 
 	// Fall back to use clientId and secret
-	token, err = GetTokenWithAppID(ctx, resource)
+	token, err := GetTokenWithAppID(ctx, resource)
 
 	if err == nil {
 		return token, nil

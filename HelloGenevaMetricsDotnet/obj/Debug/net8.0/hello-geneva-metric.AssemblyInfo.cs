@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("hello-geneva-metric")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+66b1842c1f761cd4e32680a66945535bb875b210")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+13ae5fab0b79750d0d23e42ff153920969bcb114")]
 [assembly: System.Reflection.AssemblyProductAttribute("hello-geneva-metric")]
 [assembly: System.Reflection.AssemblyTitleAttribute("hello-geneva-metric")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

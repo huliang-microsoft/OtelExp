@@ -13,6 +13,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
 	"rai-go-otel/auth"
 	"rai-go-otel/otelcustomhttpmetricexportor"
@@ -22,6 +23,8 @@ import (
 
 // The public otel collector scope.
 var SCOPE = "fa65c9d1-e75e-4ac1-b7c1-608189fd7969/.default"
+//var SCOPE = "fa65c9d1-e75e-4ac1-b7c1-608189fd7969" // IMDS or AML does not need /.default
+//var SCOPE = "https://raiglobaltestcdb.documents.azure.com/.default"
 
 // The RAIUAI identity ID in AME
 var UAI_CLIENT_ID = "1baa67a6-59c1-4c0f-a675-ee2682793b42"
@@ -32,7 +35,7 @@ var metricExporter *otelcustomhttpmetricexportor.Exporter
 
 func UpdateMetricExporterAuthToken(realToken bool, ctx context.Context) {
 	if realToken {
-		token, _ := auth.GetToken(ctx, SCOPE, UAI_CLIENT_ID)
+		token, _ := auth.GetToken(ctx, SCOPE)
 		metricExporter.UpdateClientHeader("Authorization", []string{"Bearer " + token})
 		println("Update the header token with real token.")
 	} else {
@@ -42,7 +45,7 @@ func UpdateMetricExporterAuthToken(realToken bool, ctx context.Context) {
 }
 
 func newTraceExporter(ctx context.Context) (trace.SpanExporter, error) {
-	token, err := auth.GetToken(ctx, SCOPE, UAI_CLIENT_ID)
+	token, err := auth.GetToken(ctx, SCOPE)
 	if err != nil {
 		return nil, err
 	}
@@ -54,15 +57,23 @@ func newTraceExporter(ctx context.Context) (trace.SpanExporter, error) {
 }
 
 func newMetricsExporter(ctx context.Context) (metric.Exporter, error) {
-	token, err := auth.GetToken(ctx, SCOPE, UAI_CLIENT_ID)
+	token, err := auth.GetToken(ctx, SCOPE)
 	if err != nil {
 		return nil, err
 	}
 
 	kv := make(map[string]string)
 	kv["Authorization"] = "Bearer " + token
+	println("FCHERE!")
 
-	exporter, err := otelcustomhttpmetricexportor.New(ctx, otelcustomhttpmetricexportor.WithHeaders(kv))
+	deltaTemporalitySelector := func(metric.InstrumentKind) metricdata.Temporality { return metricdata.DeltaTemporality }
+	exporter, err := otelcustomhttpmetricexportor.New(
+		ctx,
+		otelcustomhttpmetricexportor.WithHeaders(kv),
+		otelcustomhttpmetricexportor.WithEndpoint("ca-otelcol-x4yn76z33dtmk.yellowfield-08887084.francecentral.azurecontainerapps.io"),
+		//otelcustomhttpmetricexportor.WithInsecure(),
+		//otelcustomhttpmetricexportor.WithEndpoint("localhost:4318"),
+		otelcustomhttpmetricexportor.WithTemporalitySelector(deltaTemporalitySelector))
 
 	// Keep the reference of the exporter instance. Or we cannot update the token.
 	metricExporter = exporter
@@ -102,7 +113,7 @@ func SetupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 		return
 	}
 	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
-	otel.SetTracerProvider(tracerProvider)
+	//otel.SetTracerProvider(tracerProvider)
 
 	// Set up meter provider.
 	meterProvider, err := newMeterProvider()
@@ -142,7 +153,7 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(traceExporter,
 			// Default is 5s. Set to 1s for demonstrative purposes.
-			trace.WithBatchTimeout(time.Second)),
+			trace.WithBatchTimeout(10 * time.Second)),
 		trace.WithResource(res),
 	)
 	return traceProvider, nil
@@ -151,10 +162,10 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 func newMeterProvider() (*metric.MeterProvider, error) {
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("huliang-stubraio-metricname"),
-		semconv.ServiceNamespaceKey.String("huliang-stubraio-metricns"),
+		semconv.ServiceNameKey.String("huliang-ametest-metricname"),
+		semconv.ServiceNamespaceKey.String("huliang-ametest-metricns"),
 		semconv.ServiceVersionKey.String("1.0.0"),
-		semconv.ServiceInstanceIDKey.String("huliang-stubraio-metricid"),
+		semconv.ServiceInstanceIDKey.String("huliang-ametest-metricid"),
 	)
 
 	metricExporter, err := newMetricsExporter(context.Background())
@@ -165,7 +176,7 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 	meterProvider := metric.NewMeterProvider(
 		metric.WithReader(metric.NewPeriodicReader(metricExporter,
 			// Default is 1m. Set to 3s for demonstrative purposes.
-			metric.WithInterval(3*time.Second))),
+			metric.WithInterval(30*time.Second))),
 		metric.WithResource(res),
 	)
 	return meterProvider, nil

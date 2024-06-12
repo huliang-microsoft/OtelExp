@@ -13,6 +13,9 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"rai-go-otel/otelsetup"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 func main() {
@@ -61,6 +64,20 @@ func run() (err error) {
 			println("Sleep done")
 		}
 
+	}()
+
+	// For testing purpose, run a infinite loop to emit metrics
+	go func() {
+		testCnt, _ := meter.Int64Counter("rai.experiment.annotate",
+		metric.WithDescription("The number of annotate call."),
+		metric.WithUnit("{annotate}"))
+		for {
+			attr1 := attribute.String("annotate.result.value", "123")
+			attr2 := attribute.Int("annotate.result.remote.tms.latency", 100)
+			//span.SetAttributes(annotateResultValueAttr)
+			testCnt.Add(context.Background(), 1, metric.WithAttributes(attr1, attr2))
+			time.Sleep(3 * time.Second)
+		}
 	}()
 
 	// Wait for interruption.
